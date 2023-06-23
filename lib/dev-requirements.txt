@@ -14,7 +14,7 @@ semver<3
 setuptools>=65.5.1
 testfixtures
 twine
-wheel
+wheel>=0.40.0
 # mypy types
 types-click
 types-protobuf
