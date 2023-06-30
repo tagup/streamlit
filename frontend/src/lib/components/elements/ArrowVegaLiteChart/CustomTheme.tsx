@@ -170,9 +170,9 @@ export function applyThemeDefaults(config: any, theme: EmotionTheme): any {
       continuousHeight: 350,
       continuousWidth: 400,
     },
-    mark: {
-      tooltip: true,
-    },
+    // mark: {
+    //   tooltip: true,
+    // },
   }
 
   if (!config) {
