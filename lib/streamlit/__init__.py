@@ -104,6 +104,7 @@ _config.on_config_parsed(_update_logger, True)
 
 _main = _DeltaGenerator(root_container=_RootContainer.MAIN)
 sidebar = _DeltaGenerator(root_container=_RootContainer.SIDEBAR, parent=_main)
+event = _DeltaGenerator(root_container=_RootContainer.EVENT, parent=_main)
 
 secrets = _secrets_singleton
 
@@ -118,6 +119,8 @@ bokeh_chart = _main.bokeh_chart
 button = _main.button
 caption = _main.caption
 camera_input = _main.camera_input
+chat_message = _main.chat_message
+chat_input = _main.chat_input
 checkbox = _main.checkbox
 code = _main.code
 columns = _main.columns
@@ -170,6 +173,9 @@ video = _main.video
 warning = _main.warning
 write = _main.write
 color_picker = _main.color_picker
+
+# Events - Note: these methods cannot be called directly on sidebar (ex: st.sidebar.toast)
+toast = event.toast
 
 # Legacy
 _legacy_dataframe = _main._legacy_dataframe
