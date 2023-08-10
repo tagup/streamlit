@@ -657,6 +657,14 @@ class RerunException(ScriptControlException):
         return util.repr_(self)
 
 
+class OnPurposeRerunException(RerunException):
+    """Exception raised when the user has requested a rerun.
+
+    This is seperarate from RerunException so we can distinguish between the
+    two in an exception handler.
+    """
+
+
 def _clean_problem_modules() -> None:
     """Some modules are stateful, so we have to clear their state."""
 

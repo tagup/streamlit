@@ -16,7 +16,7 @@ from typing import NoReturn
 
 from streamlit.runtime.scriptrunner import (
     RerunData,
-    RerunException,
+    OnPurposeRerunException,
     StopException,
     get_script_run_ctx,
 )
@@ -62,7 +62,7 @@ def rerun() -> NoReturn:
         query_string = ctx.query_string
         page_script_hash = ctx.page_script_hash
 
-    raise RerunException(
+    raise OnPurposeRerunException(
         RerunData(
             query_string=query_string,
             page_script_hash=page_script_hash,

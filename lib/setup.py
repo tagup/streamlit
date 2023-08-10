@@ -21,7 +21,7 @@ from setuptools.command.install import install
 
 THIS_DIRECTORY = Path(__file__).parent
 
-VERSION = "1.25.0"  # PEP-440
+VERSION = "1.25.0.dev1"  # PEP-440
 
 NAME = "streamlit"
 
@@ -52,21 +52,12 @@ INSTALL_REQUIRES = [
     # upper bound on it.
     "pyarrow>=6.0",
     "pympler>=0.9, <2",
-<<<<<<< HEAD
-    "python-dateutil>=2, <3",
-    "requests>=2.4, <3",
-    "rich>=10.11.0, <14",
-    "tenacity>=8.0.0, <9",
-    "toml<2",
-    "typing-extensions>=4.0.1, <5",
-=======
     "python-dateutil>=2.7.3, <3",
     "requests>=2.18, <3",
     "rich>=10.14.0, <14",
     "tenacity>=8.1.0, <9",
     "toml>=0.10.1, <2",
     "typing-extensions>=4.1.0, <5",
->>>>>>> release/1.25.0
     "tzlocal>=1.1, <5",
     "validators>=0.2, <1",
     # Don't require watchdog on MacOS, since it'll fail without xcode tools.
