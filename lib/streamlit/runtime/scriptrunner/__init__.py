@@ -25,6 +25,7 @@ from streamlit.runtime.scriptrunner.script_run_context import (
 )
 from streamlit.runtime.scriptrunner.script_runner import (
     RerunException as RerunException,
+    OnPurposeRerunException as OnPurposeRerunException,
 )
 from streamlit.runtime.scriptrunner.script_runner import ScriptRunner as ScriptRunner
 from streamlit.runtime.scriptrunner.script_runner import (
