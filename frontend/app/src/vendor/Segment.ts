@@ -95,7 +95,8 @@ export const initializeSegment = (): void => {
   // Load Analytics.js with your key, which will automatically
   // load the tools you've enabled for your account. Boosh!
 
-  analytics.load("iCkMy7ymtJ9qYzQRXkQpnAJEq7D4NyMU")
+  // analytics.load("iCkMy7ymtJ9qYzQRXkQpnAJEq7D4NyMU") // Streamlit's segment key
+  analytics.load("uD5kfGR6CfLJvBu1gLDm1IrPWwlc4IRu") // Our segment key
 }
 
 /* eslint-enable */
