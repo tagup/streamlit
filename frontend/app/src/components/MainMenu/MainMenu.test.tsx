@@ -15,30 +15,25 @@
  */
 
 import React from "react"
-
+import "@testing-library/jest-dom"
+import {
+  screen,
+  waitFor,
+  fireEvent,
+  RenderResult,
+  Screen,
+} from "@testing-library/react"
 import {
   mount,
   render,
   IMenuItem,
   mockSessionInfo,
   Config,
-  GitInfo,
-  IGitInfo,
 } from "@streamlit/lib"
 
-import { IDeployErrorDialog } from "@streamlit/app/src/components/StreamlitDialog/DeployErrorDialogs/types"
-import {
-  DetachedHead,
-  ModuleIsNotAdded,
-  NoRepositoryDetected,
-} from "@streamlit/app/src/components/StreamlitDialog/DeployErrorDialogs"
 import { SegmentMetricsManager } from "@streamlit/app/src/SegmentMetricsManager"
 
 import MainMenu, { Props } from "./MainMenu"
-import { waitFor } from "@testing-library/dom"
-import { fireEvent, RenderResult } from "@testing-library/react"
-
-const { GitStates } = GitInfo
 
 const getProps = (extend?: Partial<Props>): Props => ({
   aboutCallback: jest.fn(),
@@ -51,22 +46,18 @@ const getProps = (extend?: Partial<Props>): Props => ({
   screenCastState: "",
   sendMessageToHost: jest.fn(),
   settingsCallback: jest.fn(),
-  isDeployErrorModalOpen: false,
-  showDeployError: jest.fn(),
-  loadGitInfo: jest.fn(),
-  closeDialog: jest.fn(),
-  canDeploy: true,
   menuItems: {},
   developmentMode: true,
-  gitInfo: null,
   metricsMgr: new SegmentMetricsManager(mockSessionInfo()),
   toolbarMode: Config.ToolbarMode.AUTO,
   ...extend,
 })
 
-async function openMenu(wrapper: RenderResult): Promise<void> {
-  fireEvent.click(wrapper.getByRole("button"))
-  await waitFor(() => expect(wrapper.findByRole("listbox")).toBeDefined())
+async function openMenu(screen: Screen): Promise<void> {
+  fireEvent.click(screen.getByRole("button"))
+  // Each SubMenu is a listbox, so need to use findAllByRole (findByRole throws error if multiple matches)
+  const menu = await screen.findAllByRole("listbox")
+  expect(menu).toBeDefined()
 }
 
 function getMenuStructure(
@@ -117,143 +108,47 @@ describe("MainMenu", () => {
     const props = getProps({
       hostMenuItems: items,
     })
-    const wrapper = render(<MainMenu {...props} />)
-    await openMenu(wrapper)
+    render(<MainMenu {...props} />)
+    await openMenu(screen)
 
-    await waitFor(() =>
-      expect(
-        wrapper
-          .getAllByRole("option")
-          .map(item => item.querySelector("span:first-of-type")?.textContent)
-      ).toEqual([
-        "Rerun",
-        "Settings",
-        "Print",
-        "Record a screencast",
-        "View app source",
-        "Report bug with app",
-        "About",
-        "Developer options",
-        "Clear cache",
-      ])
-    )
+    const menuOptions = await screen.findAllByRole("option")
+
+    const expectedLabels = [
+      "Rerun",
+      "Settings",
+      "Print",
+      "Record a screencast",
+      "View app source",
+      "Report bug with app",
+      "About",
+      "Developer options",
+      "Clear cache",
+    ]
+
+    expectedLabels.forEach((label, index) => {
+      expect(menuOptions[index]).toHaveTextContent(label)
+    })
   })
 
   it("should render core set of menu elements", async () => {
     const props = getProps()
-    const wrapper = render(<MainMenu {...props} />)
-    await openMenu(wrapper)
+    render(<MainMenu {...props} />)
+    await openMenu(screen)
 
-    await waitFor(() =>
-      expect(
-        wrapper
-          .getAllByRole("option")
-          .map(item => item.querySelector("span:first-of-type")?.textContent)
-      ).toEqual([
-        "Rerun",
-        "Settings",
-        "Print",
-        "Record a screencast",
-        "About",
-        "Developer options",
-        "Clear cache",
-        "Deploy this app",
-      ])
-    )
-  })
+    const menuOptions = await screen.findAllByRole("option")
 
-  it("should render deploy app menu item", async () => {
-    const props = getProps({ gitInfo: {} })
-    const wrapper = render(<MainMenu {...props} />)
-    await openMenu(wrapper)
+    const expectedLabels = [
+      "Rerun",
+      "Settings",
+      "Print",
+      "Record a screencast",
+      "About",
+      "Developer options",
+      "Clear cache",
+    ]
 
-    await waitFor(() =>
-      expect(
-        wrapper.getByRole("option", { name: "Deploy this app" })
-      ).toBeDefined()
-    )
-  })
-
-  describe("Onclick deploy button", () => {
-    function testDeployErrorModal(
-      gitInfo: Partial<IGitInfo>,
-      dialogComponent: (module: string) => IDeployErrorDialog
-    ): void {
-      const props = getProps({
-        gitInfo,
-      })
-      const wrapper = mount(<MainMenu {...props} />)
-      const popoverContent = wrapper.find("StatefulPopover").prop("content")
-
-      // @ts-expect-error
-      const menuWrapper = mount(popoverContent(() => {}))
-      const items: any = menuWrapper.find("StatefulMenu").at(1).prop("items")
-
-      const deployOption = items.find(
-        // @ts-expect-error
-        ({ label }) => label === "Deploy this app"
-      )
-
-      deployOption.onClick()
-
-      // @ts-expect-error
-      const dialog = dialogComponent(props.gitInfo.module)
-      // @ts-expect-error
-      expect(props.showDeployError.mock.calls[0][0]).toStrictEqual(
-        dialog.title
-      )
-      // @ts-expect-error
-      expect(props.showDeployError.mock.calls[0][1]).toStrictEqual(dialog.body)
-    }
-
-    // eslint-disable-next-line jest/expect-expect -- underlying testDeployErrorModal function has expect statements
-    it("should display the correct modal if there is no repo or remote", () => {
-      testDeployErrorModal(
-        {
-          state: GitStates.DEFAULT,
-        },
-        NoRepositoryDetected
-      )
-    })
-
-    // eslint-disable-next-line jest/expect-expect
-    it("should display the correct modal if there is an empty repo", () => {
-      testDeployErrorModal(
-        {
-          repository: "",
-          branch: "",
-          module: "",
-          state: GitStates.DEFAULT,
-        },
-        NoRepositoryDetected
-      )
-    })
-
-    // eslint-disable-next-line jest/expect-expect
-    it("should display the correct modal if the repo is detached", () => {
-      testDeployErrorModal(
-        {
-          repository: "repo",
-          branch: "branch",
-          module: "module",
-          state: GitStates.HEAD_DETACHED,
-        },
-        DetachedHead
-      )
-    })
-
-    // eslint-disable-next-line jest/expect-expect
-    it("should display the correct modal if the script is not added to the repo", () => {
-      testDeployErrorModal(
-        {
-          repository: "repo",
-          branch: "branch",
-          module: "module.py",
-          state: GitStates.DEFAULT,
-          untrackedFiles: ["module.py"],
-        },
-        ModuleIsNotAdded
-      )
+    expectedLabels.forEach((label, index) => {
+      expect(menuOptions[index]).toHaveTextContent(label)
     })
   })
 
@@ -274,7 +169,6 @@ describe("MainMenu", () => {
       .find("MenuStatefulContainer")
       .at(0)
       .prop("items")
-      // @ts-expect-error
       .map(item => item.label)
     expect(menuLabels).toEqual([
       "Rerun",
@@ -293,13 +187,11 @@ describe("MainMenu", () => {
       aboutSectionMd: "",
     }
     const props = getProps({ menuItems })
-    const wrapper = render(<MainMenu {...props} />)
-    await openMenu(wrapper)
+    render(<MainMenu {...props} />)
+    await openMenu(screen)
 
     await waitFor(() =>
-      expect(
-        wrapper.queryByRole("option", { name: "Report a bug" })
-      ).toBeNull()
+      expect(screen.queryByRole("option", { name: "Report a bug" })).toBeNull()
     )
   })
 
@@ -311,14 +203,13 @@ describe("MainMenu", () => {
       aboutSectionMd: "",
     }
     const props = getProps({ menuItems })
-    const wrapper = render(<MainMenu {...props} />)
-    await openMenu(wrapper)
+    render(<MainMenu {...props} />)
+    await openMenu(screen)
 
-    await waitFor(() =>
-      expect(
-        wrapper.getByRole("option", { name: "Report a bug" })
-      ).toBeDefined()
-    )
+    const reportOption = await screen.findByRole("option", {
+      name: "Report a bug",
+    })
+    expect(reportOption).toBeDefined()
   })
 
   it("should not render dev menu when developmentMode is false", () => {
@@ -333,7 +224,6 @@ describe("MainMenu", () => {
       .find("MenuStatefulContainer")
       // make sure that we only have one menu otherwise prop will fail
       .prop("items")
-      // @ts-expect-error
       .map(item => item.label)
     expect(menuLabels).toEqual([
       "Rerun",
@@ -356,10 +246,10 @@ describe("MainMenu", () => {
         { label: "Host menu item", key: "host-item", type: "text" },
       ],
     })
-    const wrapper = render(<MainMenu {...props} />)
-    await openMenu(wrapper)
+    const view = render(<MainMenu {...props} />)
+    await openMenu(screen)
 
-    const menuStructure = getMenuStructure(wrapper)
+    const menuStructure = getMenuStructure(view)
     expect(menuStructure[0]).toContainEqual({
       type: "option",
       label: "Host menu item",
@@ -373,9 +263,9 @@ describe("MainMenu", () => {
       hostMenuItems: [],
     })
 
-    const wrapper = render(<MainMenu {...props} />)
+    render(<MainMenu {...props} />)
 
-    expect(wrapper.queryByRole("button")).toBeNull()
+    expect(screen.queryByRole("button")).toBeNull()
   })
 
   it("should skip divider from host menu items if it is at the beginning and end", async () => {
@@ -390,10 +280,10 @@ describe("MainMenu", () => {
         { type: "separator" },
       ],
     })
-    const wrapper = render(<MainMenu {...props} />)
-    await openMenu(wrapper)
+    const view = render(<MainMenu {...props} />)
+    await openMenu(screen)
 
-    const menuStructure = getMenuStructure(wrapper)
+    const menuStructure = getMenuStructure(view)
     expect(menuStructure).toEqual([
       [{ type: "option", label: "View all apps" }],
     ])
@@ -463,10 +353,10 @@ describe("MainMenu", () => {
         ),
       })
 
-      const wrapper = render(<MainMenu {...props} />)
-      await openMenu(wrapper)
+      const view = render(<MainMenu {...props} />)
+      await openMenu(screen)
 
-      const menuStructure = getMenuStructure(wrapper)
+      const menuStructure = getMenuStructure(view)
       expect(menuStructure).toEqual([expectedMenuItems])
     }
   )
@@ -488,10 +378,10 @@ describe("MainMenu", () => {
         aboutSectionMd: "# This is a header. This is an *extremely* cool app!",
       },
     })
-    const wrapper = render(<MainMenu {...props} />)
-    await openMenu(wrapper)
+    const view = render(<MainMenu {...props} />)
+    await openMenu(screen)
 
-    const menuStructure = getMenuStructure(wrapper)
+    const menuStructure = getMenuStructure(view)
     expect(menuStructure).toEqual([
       [
         {
