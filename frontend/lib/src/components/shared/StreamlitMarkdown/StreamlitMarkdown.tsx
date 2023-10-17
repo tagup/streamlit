@@ -41,13 +41,7 @@ import remarkGfm from "remark-gfm"
 import CodeBlock from "@streamlit/lib/src/components/elements/CodeBlock"
 import IsSidebarContext from "@streamlit/lib/src/components/core/IsSidebarContext"
 import ErrorBoundary from "@streamlit/lib/src/components/shared/ErrorBoundary"
-import {
-  getMdBlue,
-  getMdGreen,
-  getMdOrange,
-  getMdRed,
-  getMdViolet,
-} from "@streamlit/lib/src/theme"
+import { getMarkdownTextColors } from "@streamlit/lib/src/theme"
 
 import { LibContext } from "@streamlit/lib/src/components/core/LibContext"
 import {
@@ -87,14 +81,14 @@ export interface Props {
   isLabel?: boolean
 
   /**
-   * Does not allow links
+   * Checkbox labels have larger font sizing
    */
-  isButton?: boolean
+  largerLabel?: boolean
 
   /**
-   * Checkbox has larger label font sizing
+   * Does not allow links
    */
-  isCheckbox?: boolean
+  disableLinks?: boolean
 
   /**
    * Toast has smaller font sizing
@@ -185,7 +179,7 @@ export const HeadingWithAnchor: FunctionComponent<HeadingWithAnchorProps> = ({
   return React.createElement(
     tag,
     { ...tagProps, ref, id: elementId },
-    <StyledLinkIconContainer>
+    <StyledLinkIconContainer data-testid="StyledLinkIconContainer">
       {elementId && !hideAnchor && (
         <StyledLinkIcon href={`#${elementId}`}>
           <LinkIcon size="18" />
@@ -235,7 +229,7 @@ export interface RenderedMarkdownProps {
   /**
    * Does not allow links
    */
-  isButton?: boolean
+  disableLinks?: boolean
 }
 
 export type CustomCodeTagProps = JSX.IntrinsicElements["code"] &
@@ -270,7 +264,7 @@ export function RenderedMarkdown({
   source,
   overrideComponents,
   isLabel,
-  isButton,
+  disableLinks,
 }: RenderedMarkdownProps): ReactElement {
   const renderers: Components = {
     pre: CodeBlock,
@@ -285,13 +279,20 @@ export function RenderedMarkdown({
     ...(overrideComponents || {}),
   }
   const theme = useTheme()
+  const { red, orange, yellow, green, blue, violet, purple, gray } =
+    getMarkdownTextColors(theme)
   const colorMapping = new Map(
     Object.entries({
-      red: getMdRed(theme),
-      blue: getMdBlue(theme),
-      green: getMdGreen(theme),
-      violet: getMdViolet(theme),
-      orange: getMdOrange(theme),
+      red: `color: ${red}`,
+      blue: `color: ${blue}`,
+      green: `color: ${green}`,
+      violet: `color: ${violet}`,
+      orange: `color: ${orange}`,
+      gray: `color: ${gray}`,
+      grey: `color: ${gray}`,
+      // Gradient from red, orange, yellow, green, blue, violet, purple
+      rainbow: `color: transparent; background-clip: text; -webkit-background-clip: text; background-image: linear-gradient(to right,
+        ${red}, ${orange}, ${yellow}, ${green}, ${blue}, ${violet}, ${purple});`,
     })
   )
   function remarkColoring() {
@@ -303,7 +304,7 @@ export function RenderedMarkdown({
             const data = node.data || (node.data = {})
             data.hName = "span"
             data.hProperties = {
-              style: `color: ${colorMapping.get(nodeName)}`,
+              style: colorMapping.get(nodeName),
             }
           }
         }
@@ -342,8 +343,8 @@ export function RenderedMarkdown({
     "input",
     "hr",
     "blockquote",
-    // Button labels additionally restrict links
-    ...(isButton ? ["a"] : []),
+    // additionally restrict links
+    ...(disableLinks ? ["a"] : []),
   ]
 
   return (
@@ -387,8 +388,8 @@ class StreamlitMarkdown extends PureComponent<Props> {
       style,
       isCaption,
       isLabel,
-      isButton,
-      isCheckbox,
+      largerLabel,
+      disableLinks,
       isToast,
     } = this.props
     const isInSidebar = this.context
@@ -398,8 +399,7 @@ class StreamlitMarkdown extends PureComponent<Props> {
         isCaption={Boolean(isCaption)}
         isInSidebar={isInSidebar}
         isLabel={isLabel}
-        isButton={isButton}
-        isCheckbox={isCheckbox}
+        largerLabel={largerLabel}
         isToast={isToast}
         style={style}
         data-testid={isCaption ? "stCaptionContainer" : "stMarkdownContainer"}
@@ -408,7 +408,7 @@ class StreamlitMarkdown extends PureComponent<Props> {
           source={source}
           allowHTML={allowHTML}
           isLabel={isLabel}
-          isButton={isButton}
+          disableLinks={disableLinks}
         />
       </StyledStreamlitMarkdown>
     )
