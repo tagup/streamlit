@@ -282,7 +282,7 @@ export function setCookie(
 ): void {
   const expirationDate = value ? expiration : new Date()
   const expirationStr: string = expirationDate
-    ? `expires=${expirationDate.toUTCString()};`
+    ? `expires=${expirationDate.toUTCString()}; Secure;`
     : ""
   document.cookie = `${name}=${value};${expirationStr}path=/`
 }
