@@ -154,7 +154,7 @@ class HealthHandler(_SpecialRequestHandler):
             # Manually setting the cookie on /healthz since it is pinged when the
             # browser is disconnected from the server.
             if config.get_option("server.enableXsrfProtection"):
-                self.set_cookie("_xsrf", self.xsrf_token)
+                self.set_cookie("_xsrf", self.xsrf_token, secure=True)
 
         else:
             # 503 = SERVICE_UNAVAILABLE
